@@ -1,10 +1,9 @@
 #include <opencv2/opencv.hpp>
 
+#include <ros/ros.h>
+
 #include <vector>
 #include <cmath>
-#include <algorithm>
-#include <ros/ros.h>
-#include <cstdio>
 
 namespace
 {
