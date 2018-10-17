@@ -1,3 +1,5 @@
+#include <opencv2/opencv.hpp>
+
 #include <vector>
 #include <cmath>
 #include <algorithm>
@@ -24,7 +26,7 @@ namespace
   class LUT
   {
   public:
-    LUT(ImageParams ip, float rv) :
+    LUT(ImageParams ip, double rv) :
       ip(ip),
       rv(rv),
       lut_x1(ip.width, std::vector<int>(ip.ndisp)),
@@ -113,6 +115,56 @@ namespace
     const double NEAR_CLIP = 0.1;
   };
 
+
+  class CSpaceExpander {
+  public:
+    CSpaceExpander(ImageParams ip, double rv) :
+      ip(ip),
+      lut(ip, rv)
+      {}
+
+    void expand(const cv::Mat_<float>& disp, cv::Mat_<float>& cspace) {
+      assert(disp.cols == ip.width && disp.rows == ip.height);
+      cv::Mat_<float> temp;
+      disp.copyTo(temp);
+      // For C-Space expansion procedure, refer to Matthies et al., 2014
+      // Row-wise expansion
+      for(int y = 0; y < disp.rows; ++y) {
+        for(int x = 0; x < disp.cols; ++x) {
+          int d = disp(y, x);
+          if (d > 0 && d < ip.ndisp) {
+            int x1 = lut.x1(x, d);
+            int x2 = lut.x2(x, d);
+            for(int x_write = x1; x_write <= x2; ++x_write) {
+              if(d > temp(y, x_write)) {
+                temp(y, x_write) = d;
+              }
+            }
+          }
+        }
+      }
+      // Column-wise expansion
+      temp.copyTo(cspace);
+      for(int x = 0; x < temp.cols; ++x) {
+        for(int y = 0; y < temp.rows; ++y) {
+          int d = temp(y, x);
+          if(d > 0 && d < ip.ndisp) {
+            int dnew = lut.dnew(d);
+            int y1 = lut.y1(y, d);
+            int y2 = lut.y2(y, d);
+            for(int y_write = y1; y_write <= y2; ++y_write) {
+              if(dnew > cspace(y_write, x)) {
+                cspace(y_write, x) = dnew;
+              }
+            }
+          }
+        }
+      }
+    }
+  private:
+    ImageParams ip;
+    LUT lut;
+  };
 } // namespace
 
 int main(int argc, char **argv) {
@@ -125,5 +177,5 @@ int main(int argc, char **argv) {
       .f = 425,
       .B = 0.20,
   };
-  LUT lut(ip, 1.0);
+  CSpaceExpander ce(ip, 1.0);
 }
