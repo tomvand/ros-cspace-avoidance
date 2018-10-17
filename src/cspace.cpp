@@ -177,6 +177,7 @@ namespace
       it(nh)
     {
       sub = it.subscribe("/disp_map/image", 1, &CSpaceNode::image_callback, this);
+      cv::namedWindow("cspace", cv::WINDOW_NORMAL);
     }
 //  private:
     void image_callback(const sensor_msgs::ImageConstPtr& msg) {
