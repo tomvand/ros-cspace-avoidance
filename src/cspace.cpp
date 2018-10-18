@@ -47,14 +47,14 @@ namespace
           double zw = ip.f_disp * ip.B / d;
           double xw = u * zw / ip.f;
           double alpha = std::atan(zw / xw);
-          double alpha1 = std::asin(rv / std::sqrt(zw * zw + xw * xw));
+          double alpha1 = std::asin(rv / std::sqrt(zw * zw + xw * xw)); // ERROR!! Argument becomes >1.0!
           double r1x = zw / std::tan(alpha + alpha1);
           double r2x = zw / std::tan(alpha - alpha1);
           double x1 = bound<double>(cx + ip.f * r1x / zw, 0, ip.width - 1);
           double x2 = bound<double>(cx + ip.f * r2x / zw, 0, ip.width - 1);
           lut_x1[x][d] = static_cast<int>(x1);
           lut_x2[x][d] = static_cast<int>(x2);
-//          ROS_INFO("(%i,%i): x1 = %i, x2 = %i", x, d, lut_x1[x][d], lut_x2[x][d]);
+          ROS_INFO("(%i,%i): x1 = %i, x2 = %i", x, d, lut_x1[x][d], lut_x2[x][d]);
         }
       }
       // y1, y2 LUT
@@ -65,14 +65,14 @@ namespace
           double zw = ip.f_disp * ip.B / d;
           double yw = v * zw / ip.f;
           double beta = std::atan(zw / yw);
-          double beta1 = std::asin(rv / std::sqrt(zw * zw + yw * yw));
+          double beta1 = std::asin(rv / std::sqrt(zw * zw + yw * yw)); // ERROR!!
           double r3y = zw / std::tan(beta + beta1);
           double r4y = zw / std::tan(beta - beta1);
           double y1 = bound<double>(cy + ip.f * r3y / zw, 0, ip.height - 1);
           double y2 = bound<double>(cy + ip.f * r4y / zw, 0, ip.height - 1);
           lut_y1[y][d] = static_cast<int>(y1);
           lut_y2[y][d] = static_cast<int>(y2);
-//          ROS_INFO("(%i,%i): y1 = %i, y2 = %i, zw = %f", y, d, lut_y1[y][d], lut_y2[y][d], zw);
+          ROS_INFO("(%i,%i): y1 = %i, y2 = %i, zw = %f", y, d, lut_y1[y][d], lut_y2[y][d], zw);
         }
       }
       // dnew LUT
@@ -217,6 +217,6 @@ int main(int argc, char **argv) {
       .f_disp = 425,
       .B = 0.20,
   };
-  CSpaceNode c(ip, 1.0);
+  CSpaceNode c(ip, 3.0);
   ros::spin();
 }
