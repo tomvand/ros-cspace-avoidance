@@ -2,6 +2,7 @@
 
 #include <ros/ros.h>
 #include <image_transport/image_transport.h>
+#include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/Image.h>
 
 #include <vector>
@@ -176,7 +177,8 @@ namespace
       ce(ip, rv),
       it(nh)
     {
-      sub = it.subscribe("/disp_map/image", 1, &CSpaceNode::image_callback, this);
+      sub = it.subscribe("disp_image", 1, &CSpaceNode::image_callback, this);
+      pub = it.advertise("cspace_image", 1);
       cv::namedWindow("cspace", cv::WINDOW_NORMAL);
     }
 //  private:
@@ -185,6 +187,10 @@ namespace
       cv::Mat_<float> cspace;
 
       ce.expand(disp, cspace);
+
+      sensor_msgs::ImagePtr msg_out = cv_bridge::CvImage(msg->header,
+          sensor_msgs::image_encodings::TYPE_32FC1, cspace).toImageMsg();
+      pub.publish(msg_out);
 
       cv::Mat_<float> debug;
       cv::vconcat(disp, cspace, debug);
