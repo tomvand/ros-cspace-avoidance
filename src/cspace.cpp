@@ -61,7 +61,7 @@ namespace
           }
           lut_x1[x][d] = static_cast<int>(x1);
           lut_x2[x][d] = static_cast<int>(x2);
-          ROS_INFO("(%i,%i): x1 = %i, x2 = %i", x, d, lut_x1[x][d], lut_x2[x][d]);
+          ROS_DEBUG("(%i,%i): x1 = %i, x2 = %i", x, d, lut_x1[x][d], lut_x2[x][d]);
         }
       }
       // y1, y2 LUT
@@ -86,7 +86,7 @@ namespace
           }
           lut_y1[y][d] = static_cast<int>(y1);
           lut_y2[y][d] = static_cast<int>(y2);
-          ROS_INFO("(%i,%i): y1 = %i, y2 = %i, zw = %f", y, d, lut_y1[y][d], lut_y2[y][d], zw);
+          ROS_DEBUG("(%i,%i): y1 = %i, y2 = %i, zw = %f", y, d, lut_y1[y][d], lut_y2[y][d], zw);
         }
       }
       // dnew LUT
@@ -194,11 +194,13 @@ namespace
   public:
     CSpaceNode(ImageParams ip, double rv) :
       ce(ip, rv),
-      it(nh)
+      it(nh),
+      nh_private("~"),
+      it_private(nh_private)
     {
       sub = it.subscribe("disp_image", 1, &CSpaceNode::image_callback, this);
       pub = it.advertise("cspace_image", 1);
-      cv::namedWindow("cspace", cv::WINDOW_NORMAL);
+      pub_debug = it_private.advertise("debug", 1);
     }
   private:
     void image_callback(const sensor_msgs::ImageConstPtr& msg) {
@@ -211,18 +213,24 @@ namespace
           sensor_msgs::image_encodings::TYPE_32FC1, cspace).toImageMsg();
       pub.publish(msg_out);
 
-      cv::Mat_<float> debug;
-      cv::vconcat(disp, cspace, debug);
-
-      cv::imshow("cspace", debug / 63.0);
-      cv::waitKey(1);
+      if(pub_debug.getNumSubscribers() > 0) {
+        cv::Mat_<float> debug;
+        cv::vconcat(disp, cspace, debug);
+        debug /= 63.0;
+        sensor_msgs::ImagePtr debug_out = cv_bridge::CvImage(msg->header,
+            sensor_msgs::image_encodings::TYPE_32FC1, debug).toImageMsg();
+        pub_debug.publish(debug_out);
+      }
     }
 
     CSpaceExpander ce;
     ros::NodeHandle nh;
+    ros::NodeHandle nh_private;
     image_transport::ImageTransport it;
+    image_transport::ImageTransport it_private;
     image_transport::Subscriber sub;
     image_transport::Publisher pub;
+    image_transport::Publisher pub_debug;
   };
 } // namespace
 
