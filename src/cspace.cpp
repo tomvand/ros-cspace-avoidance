@@ -200,7 +200,7 @@ namespace
     {
       sub = it.subscribe("disp_image", 1, &CSpaceNode::image_callback, this);
       pub = it.advertise("cspace_image", 1);
-      pub_debug = it_private.advertise("debug", 1);
+      pub_debug = it_private.advertise("debug_image", 1);
     }
   private:
     void image_callback(const sensor_msgs::ImageConstPtr& msg) {
