@@ -244,6 +244,6 @@ int main(int argc, char **argv) {
       .f_disp = 425,
       .B = 0.20,
   };
-  CSpaceNode c(ip, 3.0);
+  CSpaceNode c(ip, 2.0);
   ros::spin();
 }
