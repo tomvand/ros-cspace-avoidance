@@ -236,6 +236,10 @@ namespace
 
 int main(int argc, char **argv) {
   ros::init(argc, argv, "cspace");
+  ros::NodeHandle nh_private("~");
+  double rv = 2.0;
+  nh_private.getParam("rv", rv);
+  ROS_INFO("rv = %fm", rv);
   ImageParams ip = {
       .width = 96,
       .height = 96,
@@ -244,6 +248,6 @@ int main(int argc, char **argv) {
       .f_disp = 425,
       .B = 0.20,
   };
-  CSpaceNode c(ip, 2.0);
+  CSpaceNode c(ip, rv);
   ros::spin();
 }
