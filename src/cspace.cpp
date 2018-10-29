@@ -210,7 +210,7 @@ namespace
       // Apply median filtering to reduce outliers
       cv::Mat nan_mask = (disp != disp);
       disp.setTo(0.0, nan_mask); // Set NaNs to zero
-      cv::medianBlur(disp, disp, 3); // Median filtering to remove speckles
+      cv::medianBlur(disp, disp, 5); // Median filtering to remove speckles
       disp.setTo(std::numeric_limits<float>::quiet_NaN(), nan_mask); // Put NaNs back
 
       ce.expand(disp, cspace);
