@@ -207,6 +207,12 @@ namespace
       cv::Mat_<float> disp(msg->height, msg->width, (float*)(&(msg->data[0])));
       cv::Mat_<float> cspace;
 
+      // Apply median filtering to reduce outliers
+      cv::Mat nan_mask = (disp != disp);
+      disp.setTo(0.0, nan_mask); // Set NaNs to zero
+      cv::medianBlur(disp, disp, 3); // Median filtering to remove speckles
+      disp.setTo(std::numeric_limits<float>::quiet_NaN(), nan_mask); // Put NaNs back
+
       ce.expand(disp, cspace);
 
       sensor_msgs::ImagePtr msg_out = cv_bridge::CvImage(msg->header,
