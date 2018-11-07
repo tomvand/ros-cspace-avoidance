@@ -24,6 +24,7 @@ namespace
     double f; // Focal length of downscaled(!) image
     double f_disp; // Focal length for disparity calculation
     double B;
+    int ymax; // Depths y > ymax are invalid
   };
 
   class LUT
@@ -193,6 +194,7 @@ namespace
   class CSpaceNode {
   public:
     CSpaceNode(ImageParams ip, double rv) :
+      ip(ip),
       ce(ip, rv),
       it(nh),
       nh_private("~"),
@@ -207,6 +209,9 @@ namespace
       cv::Mat_<float> disp(msg->height, msg->width, (float*)(&(msg->data[0])));
       cv::Mat_<float> cspace;
 
+      // Bottom region of image is invalid
+      disp(cv::Rect(0, ip.ymax + 1, disp.cols, disp.rows - ip.ymax - 1)).setTo(std::numeric_limits<float>::quiet_NaN());
+
       // Apply median filtering to reduce outliers
       cv::Mat nan_mask = (disp != disp);
       disp.setTo(-1.0, nan_mask); // Set NaNs to < zero
@@ -214,6 +219,9 @@ namespace
       disp.setTo(std::numeric_limits<float>::quiet_NaN(), nan_mask | (disp < 0.0)); // Put NaNs back
 
       ce.expand(disp, cspace);
+
+      // Set bottom region to too close
+      cspace(cv::Rect(0, ip.ymax + 1, disp.cols, disp.rows - ip.ymax - 1)).setTo(999);
 
       sensor_msgs::ImagePtr msg_out = cv_bridge::CvImage(msg->header,
           sensor_msgs::image_encodings::TYPE_32FC1, cspace).toImageMsg();
@@ -237,6 +245,7 @@ namespace
     image_transport::Subscriber sub;
     image_transport::Publisher pub;
     image_transport::Publisher pub_debug;
+    ImageParams ip;
   };
 } // namespace
 
@@ -253,6 +262,7 @@ int main(int argc, char **argv) {
       .f = 425 / 6, // Note: get from param for now, as camera_info does not arrive before construction...
       .f_disp = 425,
       .B = 0.20,
+      .ymax = 72,
   };
   CSpaceNode c(ip, rv);
   ros::spin();
