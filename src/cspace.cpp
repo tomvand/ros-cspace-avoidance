@@ -30,7 +30,7 @@ namespace
   class LUT
   {
   public:
-    LUT(ImageParams ip, double rv) :
+    LUT(ImageParams ip, double rv, double y_factor) :
       ip(ip),
       rv(rv),
       lut_x1(ip.width, std::vector<int>(ip.ndisp)),
@@ -73,7 +73,7 @@ namespace
           double zw = ip.f_disp * ip.B / d;
           double yw = v * zw / ip.f;
           double beta = std::atan(zw / yw);
-          double arg = rv / std::sqrt(zw * zw + yw * yw);
+          double arg = rv / std::sqrt(zw * zw + yw * yw) * y_factor;
           double y1, y2;
           if(arg > -1.0 && arg < 1.0) {
             double beta1 = std::asin(arg); // ERROR!!
@@ -143,9 +143,9 @@ namespace
 
   class CSpaceExpander {
   public:
-    CSpaceExpander(ImageParams ip, double rv) :
+    CSpaceExpander(ImageParams ip, double rv, double y_factor) :
       ip(ip),
-      lut(ip, rv)
+      lut(ip, rv, y_factor)
       {}
 
     void expand(const cv::Mat_<float>& disp, cv::Mat_<float>& cspace) {
@@ -193,9 +193,9 @@ namespace
 
   class CSpaceNode {
   public:
-    CSpaceNode(ImageParams ip, double rv) :
+    CSpaceNode(ImageParams ip, double rv, double y_factor) :
       ip(ip),
-      ce(ip, rv),
+      ce(ip, rv, y_factor),
       it(nh),
       nh_private("~"),
       it_private(nh_private)
@@ -255,6 +255,9 @@ int main(int argc, char **argv) {
   double rv = 2.0;
   nh_private.getParam("rv", rv);
   ROS_INFO("rv = %fm", rv);
+  double y_factor = 0.50;
+  nh_private.getParam("y_factor", y_factor);
+  ROS_INFO("y_factor = %.2f", y_factor);
   ImageParams ip = {
       .width = 96,
       .height = 96,
@@ -264,6 +267,6 @@ int main(int argc, char **argv) {
       .B = 0.20,
       .ymax = 72,
   };
-  CSpaceNode c(ip, rv);
+  CSpaceNode c(ip, rv, y_factor);
   ros::spin();
 }
